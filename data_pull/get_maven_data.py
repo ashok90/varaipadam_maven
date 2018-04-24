@@ -30,7 +30,8 @@ def extract_dependency(url,ITER):
                 s_group_id,s_artifact_id,s_version=[str(e) for e in DEP_lst[i].split('|')[1:4]]
                 #print (s_group_id+'<->'+s_artifact_id+'<->'+s_version)
                 aurl=build_URL(s_group_id,s_artifact_id,s_version)
-                extract_dependency(aurl,ITER+1)
+                ITER=ITER+1
+                extract_dependency(aurl,ITER)
         #ITER=ITER+1
         
 
