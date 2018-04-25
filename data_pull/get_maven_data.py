@@ -21,7 +21,9 @@ def extract_dependency(url):
                     tmp = ""
                     for tag in tr.find_all('a')[-4:]:
                         tmp = tmp + tag.getText().strip('\n') + "|"
-                    l.append(title+"|"+tmp)
+                    tmp = title + '|' + tmp
+                    print(tmp)
+                    l.append(tmp)
         return l
     except:
         print("Unexpected error:", sys.exc_info()[0])
@@ -52,7 +54,7 @@ def extract_dependency_master(group_id, artifact_id, version):
             s_group_id,s_artifact_id,s_version=popped.split('|')[1:4]
             url=build_url(s_group_id,s_artifact_id,s_version)
             l.extend(extract_dependency(url))
-            print(l)
+            #print(l)
         except:
             pass
 
