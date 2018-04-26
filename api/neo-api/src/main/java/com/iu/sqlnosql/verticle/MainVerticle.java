@@ -9,6 +9,7 @@ public class MainVerticle extends AbstractVerticle {
     @Override
     public void start(Future<Void> fut) {
         vertx.deployVerticle("com.iu.sqlnosql.verticle.HttpVerticle");
+        vertx.deployVerticle("com.iu.sqlnosql.verticle.DBVerticle");
     }
 
 }
