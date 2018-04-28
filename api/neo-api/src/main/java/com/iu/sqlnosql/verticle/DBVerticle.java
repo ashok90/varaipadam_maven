@@ -7,10 +7,10 @@ import io.vertx.core.eventbus.Message;
 import org.neo4j.driver.v1.*;
 import org.neo4j.driver.v1.exceptions.Neo4jException;
 
-import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.google.gson.Gson;
 
 
 public class DBVerticle extends AbstractVerticle {
@@ -51,13 +51,21 @@ public class DBVerticle extends AbstractVerticle {
 
         logger.info("Recieved message {}", message.body());
 
-        String query = "MATCH (n:Jar) RETURN count(*);";
+        String query = "MATCH (a:Artifacts {name:'JetS3t'})-[:DEPENDENT_ON]->(n)\n" +
+                "WITH a + collect(n) as nodes\n" +
+                "RETURN nodes";
         StatementResult sr;
-        List<Record> records;
         try ( Session session = driver.session() ) {
+            logger.info(query);
             sr = session.run(query);
-            records = sr.list();
-            message.reply("success");
+            while ( sr.hasNext() )
+            {
+                Record record = sr.next();
+                Gson gson = new Gson();
+                System.out.println(gson.toJson(record.asMap()));
+                message.reply(gson.toJson(record.asMap()));
+            }
+
         }
         message.fail(500, "db error");
     }
