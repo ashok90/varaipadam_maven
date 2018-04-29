@@ -13,6 +13,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.google.gson.Gson;
 
+import java.util.HashMap;
+import java.util.Map;
+
 
 public class DBVerticle extends AbstractVerticle {
 
@@ -39,7 +42,7 @@ public class DBVerticle extends AbstractVerticle {
         if(setupBoltDriver()) {
             logger.info("Deploying db verticle completed");
             vertx.eventBus().consumer(Constants.DBSERVICE_ADDRESS, message -> {
-                getDependencies(message);
+                handleMessage(message);
             });
         } else {
             logger.error("DBVerticle deployment error");
@@ -47,10 +50,34 @@ public class DBVerticle extends AbstractVerticle {
 
     }
 
+    void handleMessage(final Message<Object> message) {
+
+        JsonObject jsonObject = (JsonObject) message.body();
+
+        switch(jsonObject.getString("type")) {
+            case "getDependency":
+                getDependencies(message);
+                break;
+            case "addArtifact":
+                addArtifact(message);
+                break;
+            case "deleteArtifact":
+                deleteArtifact(message);
+                break;
+            case "linkArtifacts":
+                linkArtifacts(message);
+                break;
+            default:
+                logger.error("invalid type");
+                break;
+        }
+
+    }
+
 
     void getDependencies(final Message<Object> message) {
 
-        logger.info("Recieved message {}", message.body());
+        logger.info("Received message {}", message.body());
 
         JsonObject jsonObject = (JsonObject) message.body();
 
@@ -58,8 +85,8 @@ public class DBVerticle extends AbstractVerticle {
 
         StatementResult sr;
         try ( Session session = driver.session() ) {
-            logger.info(Constants.QUERY);
-            sr = session.run(Constants.QUERY, Values.parameters( "name", "JetS3t" ));
+            logger.info(Constants.SEARCH_QUERY);
+            sr = session.run(Constants.SEARCH_QUERY, Values.parameters( "name",  jsonObject.getString("name")));
             while ( sr.hasNext() )
             {
                 Record record = sr.next();
@@ -69,5 +96,73 @@ public class DBVerticle extends AbstractVerticle {
 
         }
         message.fail(500, "db error");
+    }
+
+    void addArtifact(final Message<Object> message) {
+
+        logger.info("Received message {}", message.body());
+
+        JsonObject jsonObject = (JsonObject) message.body();
+
+        logger.info(jsonObject.getString("name"));
+
+        Map<String, Object> parameters = new HashMap<String, Object>();
+        parameters.put("name", jsonObject.getString("name"));
+        parameters.put("group_id", jsonObject.getString("groupId"));
+        parameters.put("artifact_id", jsonObject.getString("artifactId"));
+        parameters.put("version", jsonObject.getDouble("version"));
+        parameters.put("no_of_dependencies", jsonObject.getDouble("noOfDependencies"));
+
+        StatementResult sr;
+        try ( Session session = driver.session() ) {
+            logger.info(Constants.CREATE_QUERY);
+            sr = session.run(Constants.CREATE_QUERY, parameters);
+            System.out.println(sr.summary());
+            message.reply("creation operation completed...");
+        }
+        message.fail(500, "create operation failed");
+    }
+
+    void deleteArtifact(final Message<Object> message) {
+
+        logger.info("Received message {}", message.body());
+
+        JsonObject jsonObject = (JsonObject) message.body();
+
+        logger.info(jsonObject.getString("name"));
+
+        StatementResult sr;
+        try ( Session session = driver.session() ) {
+            logger.info(Constants.DELETE_QUERY);
+            sr = session.run(Constants.DELETE_QUERY, Values.parameters( "name",  jsonObject.getString("name")));
+            System.out.println(sr.summary());
+            message.reply("delete operation completed...");
+
+        }
+        message.fail(500, "delete operation failed");
+
+    }
+
+    void linkArtifacts(final Message<Object> message) {
+
+        logger.info("Received message {}", message.body());
+
+        JsonObject jsonObject = (JsonObject) message.body();
+
+        logger.info(jsonObject.getString("name"));
+
+        Map<String, Object> parameters = new HashMap<String, Object>();
+        parameters.put("child_jar", jsonObject.getString("childJar"));
+        parameters.put("parent_jar", jsonObject.getString("parentJar"));
+
+        StatementResult sr;
+        try ( Session session = driver.session() ) {
+            logger.info(Constants.LINK_QUERY);
+            sr = session.run(Constants.LINK_QUERY, parameters);
+            System.out.println(sr.summary());
+            message.reply("artifact linked...");
+        }
+        message.fail(500, "artifact links failed");
+
     }
 }
