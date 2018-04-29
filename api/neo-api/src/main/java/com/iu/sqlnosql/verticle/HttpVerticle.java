@@ -4,6 +4,7 @@ import com.iu.sqlnosql.constants.Constants;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.http.HttpServer;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
@@ -26,7 +27,7 @@ public class HttpVerticle extends AbstractVerticle {
 
         router.route("/status").handler(this::getStatus);
 
-        router.route("/count").handler(this::getCount);
+        router.route("/get_dependencies").handler(this::getDependencies);
 
         server = vertx.createHttpServer();
             server.requestHandler(router::accept).listen(9090, res -> {
@@ -45,9 +46,13 @@ public class HttpVerticle extends AbstractVerticle {
                 .end("service is up and running");
     }
 
-    void getCount(RoutingContext rc) {
+    void getDependencies(RoutingContext rc) {
 
-        vertx.eventBus().send(Constants.DBSERVICE_ADDRESS, "getCount", response -> {
+        JsonObject jsonObject = new JsonObject();
+
+        jsonObject.put("name", rc.queryParam("name").get(0));
+
+        vertx.eventBus().send(Constants.DBSERVICE_ADDRESS, jsonObject, response -> {
             if (response.succeeded()) {
                 rc.response().setStatusCode(200).end(response.result().body().toString());
             } else {

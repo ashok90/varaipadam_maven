@@ -4,6 +4,7 @@ import com.iu.sqlnosql.constants.Constants;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.eventbus.Message;
+import io.vertx.core.json.JsonObject;
 import org.neo4j.driver.v1.*;
 import org.neo4j.driver.v1.exceptions.Neo4jException;
 
@@ -38,7 +39,7 @@ public class DBVerticle extends AbstractVerticle {
         if(setupBoltDriver()) {
             logger.info("Deploying db verticle completed");
             vertx.eventBus().consumer(Constants.DBSERVICE_ADDRESS, message -> {
-                getCount(message);
+                getDependencies(message);
             });
         } else {
             logger.error("DBVerticle deployment error");
@@ -47,22 +48,22 @@ public class DBVerticle extends AbstractVerticle {
     }
 
 
-    void getCount(final Message<Object> message) {
+    void getDependencies(final Message<Object> message) {
 
         logger.info("Recieved message {}", message.body());
 
-        String query = "MATCH (a:Artifacts {name:'JetS3t'})-[:DEPENDENT_ON]->(n)\n" +
-                "WITH a + collect(n) as nodes\n" +
-                "RETURN nodes";
+        JsonObject jsonObject = (JsonObject) message.body();
+
+        logger.info(jsonObject.getString("name"));
+
         StatementResult sr;
         try ( Session session = driver.session() ) {
-            logger.info(query);
-            sr = session.run(query);
+            logger.info(Constants.QUERY);
+            sr = session.run(Constants.QUERY, Values.parameters( "name", "JetS3t" ));
             while ( sr.hasNext() )
             {
                 Record record = sr.next();
                 Gson gson = new Gson();
-                System.out.println(gson.toJson(record.asMap()));
                 message.reply(gson.toJson(record.asMap()));
             }
 
