@@ -30,8 +30,19 @@ footer {
   padding: 0px;
 }
 
+.tech-top {
+  background-color: silver;
+  padding-top:6px;
+  padding-bottom: 0px;
+  padding-left: 10px;
+  padding-right: 10px;
+  height: 30px;
+}
+
 .tech-stack{
-  background-color: lightskyblue;
-  padding: 10px;
-  margin: 5px;
+  background-color: #D8D8D8;
+  padding-top:0px;
+  padding-left: 10px;
+  padding-right: 10px;
+  color: black;
 }
