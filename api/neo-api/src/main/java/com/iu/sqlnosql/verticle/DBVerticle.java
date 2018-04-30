@@ -1,6 +1,7 @@
 package com.iu.sqlnosql.verticle;
 
 import com.iu.sqlnosql.constants.Constants;
+import com.iu.sqlnosql.utils.DataConverter;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.eventbus.Message;
@@ -81,18 +82,23 @@ public class DBVerticle extends AbstractVerticle {
 
         JsonObject jsonObject = (JsonObject) message.body();
 
-        logger.info(jsonObject.getString("name"));
+        String name = jsonObject.getString("name");
+
+        logger.info(name);
 
         StatementResult sr;
         try ( Session session = driver.session() ) {
             logger.info(Constants.SEARCH_QUERY);
-            sr = session.run(Constants.SEARCH_QUERY, Values.parameters( "name",  jsonObject.getString("name")));
-            while ( sr.hasNext() )
+            sr = session.run(Constants.SEARCH_QUERY, Values.parameters( "name",  name));
+
+            /*while ( sr.hasNext() )
             {
                 Record record = sr.next();
                 Gson gson = new Gson();
                 message.reply(gson.toJson(record.asMap()));
-            }
+            }*/
+
+            message.reply(DataConverter.GenerateLinkedJson(sr, name));
 
         }
         message.fail(500, "db error");

@@ -6,7 +6,8 @@ class Search extends Component {
         super(props);
         this.state = { 
             value: '',
-            message: ''
+            nodes: [],
+            hasData: false
          };
 
         this.handleChange = this.handleChange.bind(this);
@@ -31,8 +32,8 @@ class Search extends Component {
             }
         })
             .then(function (response) {
-                console.log(response);
-                self.setState({ message: 'data' });
+                console.log(response.data.nodes);
+                self.setState({ nodes: response.data.nodes });
             })
             .catch(function (error) {
                 console.log(error);
@@ -42,6 +43,16 @@ class Search extends Component {
 
 
     render() {
+        const child = this.state.nodes.map(data => {
+            return <tr key={data.group}>
+            <td>{ data.name }</td>
+            <td>{ data.group_id }</td>
+            <td>{ data.artifact_id }</td>
+            <td>{ data.version }</td>
+            <td>{ data.no_of_dependencies }</td>
+          </tr>
+          });
+
         return (
             <div className="container">
             <br/><br/><br/>
@@ -55,8 +66,21 @@ class Search extends Component {
                         <input type="submit" value="Submit" />
                     </form>
                 </div>
-                <div>
-                   <p> {this.state.message} </p>
+                <div align="center">
+                    <br/>
+                    <br/>
+                    <table border="1">
+                        <tbody>
+                            <tr>
+                                <th>Name</th>
+                                <th>Group Id</th>
+                                <th>Artifact Id</th>
+                                <th>Version</th>
+                                <th>Dependencies</th>
+                            </tr>
+                        {child}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         )
